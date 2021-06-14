@@ -9,12 +9,19 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
+    static associate({ Attachment , Task }) {
       // define association here
+      Attachment.belongsTo(Task)
     }
   };
   Attachment.init({
-    taskId: DataTypes.INTEGER,
+    taskId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        notNull: { msg: "task id is required" },
+      },
+    },
     name: DataTypes.STRING
   }, {
     sequelize,

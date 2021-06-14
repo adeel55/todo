@@ -17,7 +17,7 @@ const upload = multer({
 
 // middlewares
 
-const { auth } = require('../middlewares/auth')
+const { auth, authUnverified } = require('../middlewares/auth')
 const { filters } = require('../middlewares/filters')
 
 const userController = require('../controllers/user-controller')
@@ -32,7 +32,7 @@ const reports = require('../controllers/report-controller')
 //User
 router.post('/v1/signin', userController.signin)
 router.post('/v1/signup', userController.signup)
-router.post('/v1/verify-email', [auth], userController.verifyEmail)
+router.post('/v1/verify-email', [authUnverified], userController.verifyEmail)
 router.post('/v1/signout', [auth], userController.signout)
 router.get('/v1/users', [filters], userController.index)
 router.get('/v1/user/:id/edit', [auth], userController.edit)
@@ -53,7 +53,13 @@ router.delete('/v1/task/:id', [auth], taskController.destroy)
 
 
 
-router.post('/v1/upload/', upload.single('file'), taskController.attachments, (err, req, res, next) => {
+router.post('/v1/upload/', [
+        auth, 
+        // (req,res,next) => { console.log(req.body.taskId); if(!req.body.taskId) return res.status(400).send({ status: "error", message: "taskId missing" }); else next() } ,
+        upload.single('file')
+    ],
+    taskController.attachments,
+    (err, req, res, next) => {
     res.send({error: err.message})
 })
 

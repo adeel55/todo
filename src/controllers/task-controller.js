@@ -1,5 +1,6 @@
-const { Task , Attachment,Sequelize,Sequelize:{ Op } } = require('../../models')
+const { User, Task , Attachment,Sequelize,Sequelize:{ Op } } = require('../../models')
 const path = require('path')
+const fs = require('fs')
 
 index = async (req,res) => {
     let where = { userId: req.user.id }
@@ -65,7 +66,7 @@ create = async (req,res) => {
     }
 
     // create task for user
-    await Task.create({
+    let task = await Task.create({
         userId: req.user.id,
         title: req.body.title,
         description: req.body.description,
@@ -73,10 +74,10 @@ create = async (req,res) => {
         dueDate: req.body.dueDate,
     }).catch(e => console.log(e))
 
-    return res.send({ message: `Task created successfully.`, status: 'success'})
+    return res.status(201).send({ task , message: `Task created successfully.`, status: 'success'})
 }
 update = async (req,res) => {
-    await Task.update({
+    const isUpdated = await Task.update({
         title: req.body.title,
         description: req.body.description,
         status: req.body.status,
@@ -86,34 +87,65 @@ update = async (req,res) => {
     {  where: {id:req.params.id} })
     .catch(e => console.log(e))
 
-    return res.send({ message: `Task info updated successfully.`, status: 'success'})
+    if(Number(isUpdated)){
+        return res.send({ message: `Task info updated successfully.`, status: 'success'})
+    }else{
+        return res.status(400).send({ message: `Task info failed to update.`, status: 'error'})
+    }
 }
 destroy = async (req,res) => {
-    await Task.destroy({where:{id:req.params.id}}).catch(e => console.log(e))
 
+    let exist = await Task.findOne({
+        where: {
+            id: req.params.id
+        }
+    }).catch(e => console.log(e))
+
+    if(!exist){
+        return res.status(400).send({ message: 'task not found!', status: 'error'})
+    }
+
+    let task = await Task.findOne({
+        where: {
+            id: req.params.id
+        },
+        include: [User]
+    }).catch(e => console.log(e))
+
+    if(task.User.id != req.user.id){
+        return res.status(401).send({ message: 'User not has rights to delete this task.', status: 'unauthorized'})
+    }
 
     const attachments = await Attachment.findAll({ where:{
         taskId: req.params.id
     }}).catch(e => console.log(e))
 
-    for (file in attachments){
-        fs.unlink('./uploads/' + file)
+    for (file of attachments){
+        if(fs.existsSync('uploads/' + file.name)){
+            fs.unlinkSync('uploads/' + file.name)
+        }
     }
-    await Attachment.destroy({ where: { taskId: req.params.id }}).catch(e => console.log(e))
+    
+    await Task.destroy({where:{id:req.params.id}}).catch(e => console.log(e))
     return res.send({ message: 'Task deleted!', status: 'success'})
+
 }
 
 
 
 attachments = async (req, res) => {
+    // console.log(req.body.taskId);
+    if(!req.file)
+        return res.status(400).send({ status: "error", message: "attachment file is required" })
 
-    console.log(req.file)
     await Attachment.create({
         taskId: req.body.taskId,
         name: req.file.filename
-    }).catch(e => conssole.log(e))
+    }).catch(e => {
+        console.log(e)
+    })
 
-    return res.send({data: "file uploaded successfully"})
+    return res.send({ status:"success" , message: "file uploaded successfully" })
 }
 
 module.exports = {

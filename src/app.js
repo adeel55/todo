@@ -1,18 +1,13 @@
 const express = require("express")
-const fs = require("fs")
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const helmet = require('helmet')
 var hbs = require('hbs')
+const logRequest = require('./controllers/log-request')
 const webRouter = require('./routes/web')
-
-
 
 // init app
 const app = express()
-// middleware
-
-
 
 
 // template engine
@@ -25,50 +20,18 @@ const app = express()
 
 
 // body parser
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
-app.use(bodyParser.json());
-
-app.use((req,res,next) => {
-
-    let ip = req.ip == "::1" ? "localhost": req.ip
-
-    let logData = "Url: " + req.originalUrl + "\n"
-    logData += "IP: " + ip + "\n"
-    logData += "Response Status Code: " + res.statusCode + "\n"
-    logData += "Request Body: " + req.body + "\n"
-    logData += "Response Body: " + res.outputData + "\n"
-    logData += "At: " + new Date() + "\n\n\n"
-    
-    
-    console.log(req.originalUrl)
-    console.log(req.ip)
-    // console.log(req.headers('user-agent'))
-    console.log(req.body)
-    console.log(res.statusCode)
-    console.log(res.outputData)
-
-    let today = new Date().toISOString().split('T')[0]
-    let filename =  './src/logs/'+today+'.txt'
-    console.log()
-    console.log(new Date())
-
-    fs.appendFile(filename, logData, function (err) {
-        if (err) throw err;
-    });
-    
-    next()
-})
-
-
+// log all requests into files
+app.use(logRequest.make)
 // helmet
 app.use(helmet())
 // cors
 app.use(cors({ origin: true, credentials: true }))
-
 // define apis router
-app.use('/api',webRouter)
+app.use('/api', webRouter)
 
 
 

@@ -40,6 +40,16 @@ index = async (req,res) => {
 
 signup = async (req, res) => {
 
+    let existUser = await User.findOne({
+        where: {
+            email: req.body.email
+        }
+    }).catch(e => console.log(e))
+
+    if(existUser){
+        return res.status(400).send({ status: "error" , message: "email already taken"})
+    }
+
     const user = await User.create({
         fullName: req.body.fullName,
         email: req.body.email,
@@ -50,7 +60,14 @@ signup = async (req, res) => {
     sendEmailVerificationCode(code)
     let token = await user.generateAuthToken()
 
-    return res.send({status: 'success' , message : "An email has been sent to you with verification code please verify your email with that 6 digit code.", token})
+    let userSend = {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        token
+    }
+
+    return res.send({ user: userSend, status: 'success' , message : "An email has been sent to you with verification code please verify your email with that 6 digit code.", token})
 
 }
 
@@ -92,6 +109,12 @@ signin = async (req, res) => {
     let token = await user.generateAuthToken()
 
     return res.send({
+        user: {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            token
+        },
         token,
         status: "success",
         message: "signin successfull"
@@ -133,8 +156,8 @@ destroy = async (req,res) => {
 
 sendEmailVerificationCode = async(code) => {
     // send email
-    console.log('Email verificcation code: ')
-    console.log(code)
+    // console.log('Email verificcation code: ')
+    // console.log(code)
 }
 
 module.exports = {

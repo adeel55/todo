@@ -109,16 +109,6 @@ maxTasksCompletionDay = async (req,res) => {
 }
 tasksOpenInDayOfWeek = async (req,res) => {
 
-    // Total tasks
-    // let allTasks = await Task.count({
-    //     attributes: [],
-    //     where: {
-    //         userId: req.user.id,
-    //     },
-    //     group: [sequelize.fn(`DAYNAME`,`startDate`)]
-    // }).catch(e => console.log(e))
-
-
     let sql = "SELECT DAYNAME(`startDate`) as `day`, count(*) AS `tasksopened` FROM `Tasks` AS `Task` WHERE `Task`.`userId` = 1 GROUP BY DAYNAME(`startDate`)"
 
     let allTasks = await sequelize.query(sql, null, {raw: true})

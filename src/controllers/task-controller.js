@@ -1,4 +1,4 @@
-const { User, Task , Attachment,Sequelize,Sequelize:{ Op } } = require('../../models')
+const { User, Task , Attachment,Sequelize,Sequelize:{ Op }, sequelize } = require('../../models')
 const path = require('path')
 const fs = require('fs')
 
@@ -43,6 +43,7 @@ view = async (req,res) => {
     return res.send({ data: {task}, status: 'success'})
 }
 edit = async (req,res) => {
+
     let task = await Task.findOne({
         attributes: ['id', 'title', 'description', 'startDate', 'dueDate', 'updatedAt', 'createdAt'],
         where: {
@@ -50,6 +51,7 @@ edit = async (req,res) => {
         }
     }).catch(e => console.log(e))
     return res.send({ data: {task}, status: 'success'})
+    
 }
 create = async (req,res) => {
 
@@ -77,6 +79,7 @@ create = async (req,res) => {
     return res.status(201).send({ task , message: `Task created successfully.`, status: 'success'})
 }
 update = async (req,res) => {
+
     const isUpdated = await Task.update({
         title: req.body.title,
         description: req.body.description,
@@ -95,32 +98,22 @@ update = async (req,res) => {
 }
 destroy = async (req,res) => {
 
+    // check if task exist
     let exist = await Task.findOne({
         where: {
             id: req.params.id
-        }
+        },
+        include: [User,Attachment]
     }).catch(e => console.log(e))
 
     if(!exist){
         return res.status(400).send({ message: 'task not found!', status: 'error'})
     }
-
-    let task = await Task.findOne({
-        where: {
-            id: req.params.id
-        },
-        include: [User]
-    }).catch(e => console.log(e))
-
-    if(task.User.id != req.user.id){
+    if(exist.User.id != req.user.id){
         return res.status(401).send({ message: 'User not has rights to delete this task.', status: 'unauthorized'})
     }
 
-    const attachments = await Attachment.findAll({ where:{
-        taskId: req.params.id
-    }}).catch(e => console.log(e))
-
-    for (file of attachments){
+    for (file of exist.Attachments){
         if(fs.existsSync('uploads/' + file.name)){
             fs.unlinkSync('uploads/' + file.name)
         }
@@ -148,6 +141,28 @@ attachments = async (req, res) => {
     return res.send({ status:"success" , message: "file uploaded successfully" })
 }
 
+
+similarTasks = async (req, res) => {
+
+    let tasks = await Task.findAll({
+        attributes: [[sequelize.fn('count','id'), 'taskCount'], 'title'],
+        where: {
+            userId: req.user.id,
+        },
+        group: ['title'],
+        having: {
+            taskCount: {
+                [Op.gt]: 1
+            }
+        }
+        
+    }).catch(e => {
+        console.log(e)
+    })
+
+    return res.send({ tasks , status:"success" })
+}
+
 module.exports = {
     index,
     create,
@@ -155,5 +170,6 @@ module.exports = {
     edit,
     update,
     destroy,
-    attachments
+    attachments,
+    similarTasks,
 }

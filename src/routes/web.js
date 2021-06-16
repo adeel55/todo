@@ -50,9 +50,6 @@ router.delete('/v1/task/:id', [auth], taskController.destroy)
 
 
 // Attachments
-
-
-
 router.post('/v1/upload/', [
         auth, 
         // (req,res,next) => { console.log(req.body.taskId); if(!req.body.taskId) return res.status(400).send({ status: "error", message: "taskId missing" }); else next() } ,
@@ -72,5 +69,13 @@ router.get('/v1/report/averageCompletedTasksPerDay', [ auth ], reports.averageCo
 router.get('/v1/report/overDueTasks', [ auth ], reports.overDueTasks)
 router.get('/v1/report/maxTasksCompletionDay', [ auth ], reports.maxTasksCompletionDay)
 router.get('/v1/report/tasksOpenInDayOfWeek', [ auth ], reports.tasksOpenInDayOfWeek)
+
+
+
+
+// Similar tasks
+router.get('/v1/similar-tasks', auth, taskController.similarTasks)
+
+
 
 module.exports = router

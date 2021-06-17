@@ -11,12 +11,9 @@ const app = express()
 
 
 // template engine
-// app.set('view engine', 'hbs');
-// app.set('views', __dirname);
-// hbs.registerPartials(__dirname + '/views/partials', (err) => err ? console.log(err):null );
-// app.get('/', (req,res) => {
-//     return res.render('./views/index',{names:['Adeel','Hamza','Fiaz','Subtain']})
-// })
+app.set('view engine', 'hbs');
+app.set('views', __dirname);
+hbs.registerPartials(__dirname + '/views/partials', (err) => err ? console.log(err):null );
 
 
 // body parser

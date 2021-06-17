@@ -24,6 +24,9 @@ const userController = require('../controllers/user-controller')
 const taskController = require('../controllers/task-controller')
 const reports = require('../controllers/report-controller')
 
+const scheduleController = require('../controllers/scheduled-controller')
+
+
 
 
 
@@ -75,6 +78,10 @@ router.get('/v1/report/tasksOpenInDayOfWeek', [ auth ], reports.tasksOpenInDayOf
 
 // Similar tasks
 router.get('/v1/similar-tasks', auth, taskController.similarTasks)
+
+
+// Test email endpoints
+router.get('/v1/test-reminder-email', scheduleController.sendReminderEmail)
 
 
 

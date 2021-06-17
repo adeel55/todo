@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs')
-const { User , Sequelize,Sequelize:{ Op } } = require('../../models')
+const { User , sequelize, Sequelize:{ Op } } = require('../../models')
+const notification = require("./notification-controller")
 
 index = async (req,res) => {
     let where = { }
@@ -56,8 +57,11 @@ signup = async (req, res) => {
     }).catch(e => console.log(e))
 
     await user.generateAndSaveNewPassword(req.body.password)
+    
+    // generate and send email-verification code notification by email
     let code = await user.generateEmailVerificationCode()
-    sendEmailVerificationCode(code)
+    notification.email(req.body.email,'Email Verification Code','email-verification-code',{code})
+    
     let token = await user.generateAuthToken()
 
     let userSend = {

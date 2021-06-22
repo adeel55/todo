@@ -163,6 +163,23 @@ similarTasks = async (req, res) => {
     return res.send({ tasks , status:"success" })
 }
 
+sessions = async (req, res) => {
+
+    req.session.data = {
+        pair: req.body.saveIt
+    }
+    return res.send({ status: "sessions saved" , session: req.session.data})
+
+}
+
+sessionsGet = async (req, res) => {
+
+    res.send({
+        data: req.session
+    })
+
+}
+
 module.exports = {
     index,
     create,
@@ -172,4 +189,6 @@ module.exports = {
     destroy,
     attachments,
     similarTasks,
+    sessions,
+    sessionsGet
 }

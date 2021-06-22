@@ -7,37 +7,26 @@ index = async (req,res) => {
 totalTasks = async (req,res) => {
 
     // Total tasks
-    let allTasks = await Task.count({
+    let tasks = await Task.count({
         where: {
             userId: req.user.id,
-        }
+        },
+        group: ['status']
     }).catch(e => console.log(e))
 
-
-    // Completed tasks
-    let tasksCompleted = await Task.count({
-        where: {
-            userId: req.user.id,
-            status: true
-        }
-    }).catch(e => console.log(e))
+    var data = {
+        completed: 0,
+        incompleted: 0,
+        total: 0
+    }
+    for(val of tasks) {
+        data.total = Number(val.count) + Number(data.total)
+        if(val.status == 1) data.completed = val.count
+        if(val.status == 0) data.incompleted = val.count
+    }
     
-    
-    
-    // Incompleted tasks
-    let tasksNotCompleted = await Task.count({
-        where: {
-            userId: req.user.id,
-            status: false
-        }
-    }).catch(e => console.log(e))
+    return res.send({ data, status: 'success'})
 
-
-    return res.send({ data: {
-        allTasks,
-        tasksCompleted,
-        tasksNotCompleted,
-    }, status: 'success'})
 }
 averageCompletedTasksPerDay = async (req,res) => {
 

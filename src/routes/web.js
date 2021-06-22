@@ -80,8 +80,17 @@ router.get('/v1/report/tasksOpenInDayOfWeek', [ auth ], reports.tasksOpenInDayOf
 router.get('/v1/similar-tasks', auth, taskController.similarTasks)
 
 
+// Oauth 2.0
+router.get('/auth/google', userController.Oauth)
+router.get('/auth/google/callback', userController.cb)
+router.get('/v1/index', userController.home)
+
+
+
 // Test email endpoints
 router.get('/v1/test-reminder-email', scheduleController.sendReminderEmail)
+router.get('/v1/test-sessions', taskController.sessions)
+router.get('/v1/test-sessions-get', taskController.sessionsGet)
 
 
 

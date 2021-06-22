@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const { User , sequelize, Sequelize:{ Op } } = require('../../models')
 const notification = require("./notification-controller")
+const passport = require("passport")
 
 index = async (req,res) => {
     let where = { }
@@ -41,6 +42,7 @@ index = async (req,res) => {
 
 signup = async (req, res) => {
 
+   try {
     let existUser = await User.findOne({
         where: {
             email: req.body.email
@@ -54,7 +56,10 @@ signup = async (req, res) => {
     const user = await User.create({
         fullName: req.body.fullName,
         email: req.body.email,
-    }).catch(e => console.log(e))
+    }).catch(e => {
+        console.log(e)
+        throw Error("Invalid email")
+    })
 
     await user.generateAndSaveNewPassword(req.body.password)
     
@@ -70,8 +75,13 @@ signup = async (req, res) => {
         email: user.email,
         token
     }
-
+    
     return res.send({ user: userSend, status: 'success' , message : "An email has been sent to you with verification code please verify your email with that 6 digit code.", token})
+
+   } catch(err){
+
+       return res.send({ status: 'false' , message : "bad request"})
+   }
 
 }
 
@@ -164,6 +174,32 @@ sendEmailVerificationCode = async(code) => {
     // console.log(code)
 }
 
+
+
+
+Oauth = async (req, res) => {
+
+    passport.authenticate('google', {
+        scope: ['profile', 'email']
+    })
+
+
+
+}
+cb = async (req, res) => {
+
+    passport.authenticate('google'),
+    (req, res) => {
+      res.redirect('/api/v1/index');
+    }
+
+
+
+}
+home = async (req, res) => {
+
+        return res.render('index') 
+}
 module.exports = {
     index,
     signup,
@@ -172,5 +208,8 @@ module.exports = {
     signout,
     edit,
     update,
-    destroy
+    destroy,
+    Oauth,
+    cb,
+    home
 }

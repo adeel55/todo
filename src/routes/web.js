@@ -1,7 +1,12 @@
 const express = require('express')
+const passport = require('passport')
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
 const path = require('path')
 const router = new express.Router()
 const multer = require('multer')
+
+// multer filer upload storage
 const storage = multer.diskStorage({
     destination: function(req,file,cb){
         cb(null,'uploads/')
@@ -19,79 +24,40 @@ const upload = multer({
 
 const { auth, authUnverified } = require('../middlewares/auth')
 const { filters } = require('../middlewares/filters')
-
 const userController = require('../controllers/user-controller')
-const taskController = require('../controllers/task-controller')
-const reports = require('../controllers/report-controller')
-
-const scheduleController = require('../controllers/scheduled-controller')
 
 
+// Oauth 2.0  Passport
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
+passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+    profileFields: ['id', 'displayName', 'email']
+  },
+  userController.facebookPassport
+));
+passport.use(new GoogleStrategy(
+    {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL
+    },
+    userController.googlePassport
+))
+
+router.get('/auth/google',  passport.authenticate('google', { scope: ['profile','email'] }))
+router.get('/auth/facebook',  passport.authenticate('facebook', {scope:'email'}))
+router.get('/auth/google/callback', passport.authenticate('google'), userController.googleCallback);
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { scope: 'email'}), userController.facebookCallback)
 
 
+// login routes
 
-
-
-//User
-router.post('/v1/signin', userController.signin)
-router.post('/v1/signup', userController.signup)
-router.post('/v1/verify-email', [authUnverified], userController.verifyEmail)
-router.post('/v1/signout', [auth], userController.signout)
-router.get('/v1/users', [filters], userController.index)
-router.get('/v1/user/:id/edit', [auth], userController.edit)
-router.put('/v1/user/:id', [auth], userController.update)
-router.delete('/v1/user/:id', [auth], userController.destroy)
-
-
-//Task
-router.get('/v1/tasks', [ auth, filters], taskController.index)
-router.post('/v1/task', [ auth ], taskController.create)
-router.get('/v1/task/:id', [ auth ], taskController.view)
-router.get('/v1/task/:id/edit', [ auth ], taskController.edit)
-router.put('/v1/task/:id', [auth], taskController.update)
-router.delete('/v1/task/:id', [auth], taskController.destroy)
-
-
-// Attachments
-router.post('/v1/upload/', [
-        auth, 
-        // (req,res,next) => { console.log(req.body.taskId); if(!req.body.taskId) return res.status(400).send({ status: "error", message: "taskId missing" }); else next() } ,
-        upload.single('file')
-    ],
-    taskController.attachments,
-    (err, req, res, next) => {
-    res.send({error: err.message})
-})
-
-
-
-// Reports
-
-router.get('/v1/report/totalTasks', [ auth ], reports.totalTasks)
-router.get('/v1/report/averageCompletedTasksPerDay', [ auth ], reports.averageCompletedTasksPerDay)
-router.get('/v1/report/overDueTasks', [ auth ], reports.overDueTasks)
-router.get('/v1/report/maxTasksCompletionDay', [ auth ], reports.maxTasksCompletionDay)
-router.get('/v1/report/tasksOpenInDayOfWeek', [ auth ], reports.tasksOpenInDayOfWeek)
-
-
-
-
-// Similar tasks
-router.get('/v1/similar-tasks', auth, taskController.similarTasks)
-
-
-// Oauth 2.0
-router.get('/auth/google', userController.Oauth)
-router.get('/auth/google/callback', userController.cb)
-router.get('/v1/index', userController.home)
-
-
-
-// Test email endpoints
-router.get('/v1/test-reminder-email', scheduleController.sendReminderEmail)
-router.get('/v1/test-sessions', taskController.sessions)
-router.get('/v1/test-sessions-get', taskController.sessionsGet)
-
-
+router.get('/login', (req,res) => {return res.render('./views/login')})
+router.get('/login-success', (req,res) => res.render('./views/login-success'))
+router.get('/login-password', (req,res) => res.render('./views/login-password'))
 
 module.exports = router

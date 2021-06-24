@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs')
-const { User , sequelize, Sequelize:{ Op } } = require('../../models')
+const { User , Sequelize:{ Op } } = require('../../models')
 const notification = require("./notification-controller")
-const passport = require("passport")
 
 index = async (req,res) => {
     let where = { }
@@ -174,32 +173,119 @@ sendEmailVerificationCode = async(code) => {
     // console.log(code)
 }
 
+setPassword = async (req,res) => {
+    let data = {}
+    const user = await User.findOne({
+        where: {
+            token: req.body.token
+        }
+    }).catch(e => console.log(e))
 
+    if(user){
+        await user.generateAndSaveNewPassword(req.body.password)
+        data = { 
+            status: "success", 
+            message1: "New password set successfully",
+            message2: "You are successfully logged in"
+        }
+    }else{
+        data = { 
+            status: "success", 
+            message1: "User not found",
+            message2: "Failed to set new password"
+        }
+    }
+        
+    return res.render('./views/login-success', data)
 
+}
 
-Oauth = async (req, res) => {
-
-    passport.authenticate('google', {
-        scope: ['profile', 'email']
+facebookPassport = async (accessToken, refreshToken, profile, cb) => {
+    await User.create({
+        fullName: profile._json.name,
+        email: profile._json.email,
+        emailVerifiedAt: new Date(),
+        token: accessToken,
+    }).catch(err => console.log(err))
+    return cb(null,profile);
+}
+googlePassport = async (accessToken, refreshToken, profile, done) => {
+    await User.create({
+        fullName: profile._json.name,
+        email: profile._json.email,
+        emailVerifiedAt: new Date(),
+        token: accessToken,
+    }).catch(err => console.log(err))
+    return done(null, profile)
+}
+facebookCallback = async (req, res) => {
+    // console.log(req.session)
+    const user = await User.findOne({ 
+        where: { 
+            email: req.session.passport.user._json.email,
+        }
     })
 
+    if(user){
 
+        if(user.password){
+            return res.render('./views/login-success',{ 
+                status: "success", 
+                message1: "",
+                message2: "You are successfully logged in"
+            })
+        }else{
+            return res.render('./views/login-password', { 
+                data: { 
+                    email: req.session.passport.user._json.email,
+                    token: user.token
+                }
+            })
+        }
 
-}
-cb = async (req, res) => {
-
-    passport.authenticate('google'),
-    (req, res) => {
-      res.redirect('/api/v1/index');
+    }else{
+        return res.render('./views/login-success',{ 
+            status: "success", 
+            message1: "User not fount",
+            message2: "Failed to authenticate with facebook"
+        })
     }
-
-
-
 }
-home = async (req, res) => {
+googleCallback = async (req, res) => {
+    // console.log(req.session)
+    const user = await User.findOne({ 
+        where: { 
+            email: req.session.passport.user._json.email,
+        }
+    })
 
-        return res.render('index') 
+    if(user){
+
+        if(user.password){
+            return res.render('./views/login-success',{ 
+                status: "success", 
+                message1: "",
+                message2: "You are successfully logged in"
+            })
+        }else{
+            return res.render('./views/login-password', { 
+                data: { 
+                    email: req.session.passport.user._json.email,
+                    token: user.token
+                }
+            })
+        }
+
+    }else{
+        return res.render('./views/login-success',{ 
+            status: "success", 
+            message1: "User not fount",
+            message2: "Failed to authenticate with facebook"
+        })
+    }
 }
+
+
 module.exports = {
     index,
     signup,
@@ -209,7 +295,9 @@ module.exports = {
     edit,
     update,
     destroy,
-    Oauth,
-    cb,
-    home
+    setPassword,
+    facebookPassport,
+    googlePassport,
+    facebookCallback,
+    googleCallback,
 }

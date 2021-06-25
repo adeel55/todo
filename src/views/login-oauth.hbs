@@ -1,0 +1,23 @@
+{{> header title="login" }}
+    <div class="container w-50">
+        <div class="row justify-contents-center m-lg-5 p-lg-4">
+            <div class="col">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white p-3">
+                        <h3 class="card-title mb-0">Oauth 2.0 Authenticationn</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-{{status}}">{{message}}</div>
+                    </div>
+                    <div class="card-footer text-end">
+                        <a href="/login-set-password" class="btn btn-primary">Set new password</a>
+                        <form action="/signout" method="post" class="d-inline">
+                            <input type="hidden" name="token" value="{{token}}">
+                            <input type="submit" class="btn btn-danger" value="Logout">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{{> footer }}

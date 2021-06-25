@@ -6,9 +6,6 @@ auth = async (req,res,next) => {
     try {
         const token = req.header('Authorization').replace('Bearer ', '')
         const user = await User.findOne({ where: { token }})
-        if (!user || user.archived) {
-            throw new Error()
-        }
         if(!user.emailVerifiedAt){
             let token = await user.generateAuthToken()
             return res.status(401).send({ 

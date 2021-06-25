@@ -41,7 +41,6 @@ router.get('/v1/users', [filters], userController.index)
 router.get('/v1/user/:id/edit', [auth], userController.edit)
 router.put('/v1/user/:id', [auth], userController.update)
 router.delete('/v1/user/:id', [auth], userController.destroy)
-router.post('/v1/set-password', userController.setPassword)
 
 
 //Task

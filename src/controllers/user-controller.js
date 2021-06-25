@@ -137,7 +137,13 @@ signin = async (req, res) => {
 }
 
 signout = async (req, res) => {
-    await req.user.signout()
+    if(!req.user){
+        const token = req.body.token || null
+        const user = await User.findOne({ where: { token }})
+        await user.signOut()
+        return res.render('./views/login')
+    }
+    await req.user.signOut()
     return res.send({ status: "success", message: "signout successfully" })
 }
 
@@ -174,115 +180,57 @@ sendEmailVerificationCode = async(code) => {
 }
 
 setPassword = async (req,res) => {
-    let data = {}
+    try {
+        const token = req.body.token || null
+        const user = await User.findOne({ where: { token }})
+        await user.generateAndSaveNewPassword(req.body.password)
+        return res.render('./views/login-oauth', {
+            status: "success", 
+            message: "New password set successfully",
+        })
+    } catch(err){
+        return res.status(400).send({status: 'bad request', message: 'error occur during changing password'})
+    }
+}
+
+passportCallbackOauth2 = async (accessToken, refreshToken, profile, cb) => {
     const user = await User.findOne({
         where: {
-            token: req.body.token
+            email: profile._json.email,
         }
-    }).catch(e => console.log(e))
-
+    })
     if(user){
-        await user.generateAndSaveNewPassword(req.body.password)
-        data = { 
-            status: "success", 
-            message1: "New password set successfully",
-            message2: "You are successfully logged in"
-        }
+        user.token = accessToken
+        await user.save()
     }else{
-        data = { 
-            status: "success", 
-            message1: "User not found",
-            message2: "Failed to set new password"
-        }
+        await User.create({
+            fullName: profile._json.name,
+            email: profile._json.email,
+            emailVerifiedAt: new Date(),
+            token: accessToken,
+        }).catch(err => console.log(err))
     }
-        
-    return res.render('./views/login-success', data)
-
-}
-
-facebookPassport = async (accessToken, refreshToken, profile, cb) => {
-    await User.create({
-        fullName: profile._json.name,
-        email: profile._json.email,
-        emailVerifiedAt: new Date(),
-        token: accessToken,
-    }).catch(err => console.log(err))
     return cb(null,profile);
 }
-googlePassport = async (accessToken, refreshToken, profile, done) => {
-    await User.create({
-        fullName: profile._json.name,
-        email: profile._json.email,
-        emailVerifiedAt: new Date(),
-        token: accessToken,
-    }).catch(err => console.log(err))
-    return done(null, profile)
-}
-facebookCallback = async (req, res) => {
+Oauth2Callback = async (req, res) => {
     // console.log(req.session)
+    let status,message = ""
     const user = await User.findOne({ 
         where: { 
             email: req.session.passport.user._json.email,
         }
     })
-
+    req.session.accessToken = user.token
     if(user){
-
-        if(user.password){
-            return res.render('./views/login-success',{ 
-                status: "success", 
-                message1: "",
-                message2: "You are successfully logged in"
-            })
-        }else{
-            return res.render('./views/login-password', { 
-                data: { 
-                    email: req.session.passport.user._json.email,
-                    token: user.token
-                }
-            })
-        }
-
+        status = "success", 
+        message = "You are successfully logged in with " + req.session.passport.user.provider
     }else{
-        return res.render('./views/login-success',{ 
-            status: "success", 
-            message1: "User not fount",
-            message2: "Failed to authenticate with facebook"
-        })
+        status = "danger", 
+        message = "Failed to authenticate with Oauth 2.0"
     }
-}
-googleCallback = async (req, res) => {
-    // console.log(req.session)
-    const user = await User.findOne({ 
-        where: { 
-            email: req.session.passport.user._json.email,
-        }
-    })
 
-    if(user){
+    return res.redirect(`/login-oauth?status=${status}&message=${message}`)
 
-        if(user.password){
-            return res.render('./views/login-success',{ 
-                status: "success", 
-                message1: "",
-                message2: "You are successfully logged in"
-            })
-        }else{
-            return res.render('./views/login-password', { 
-                data: { 
-                    email: req.session.passport.user._json.email,
-                    token: user.token
-                }
-            })
-        }
-
-    }else{
-        return res.render('./views/login-success',{ 
-            status: "success", 
-            message1: "User not fount",
-            message2: "Failed to authenticate with facebook"
-        })
-    }
 }
 
 
@@ -296,8 +244,6 @@ module.exports = {
     update,
     destroy,
     setPassword,
-    facebookPassport,
-    googlePassport,
-    facebookCallback,
-    googleCallback,
+    passportCallbackOauth2,
+    Oauth2Callback,
 }

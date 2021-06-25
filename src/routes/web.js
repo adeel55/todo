@@ -4,26 +4,10 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const path = require('path')
 const router = new express.Router()
-const multer = require('multer')
-
-// multer filer upload storage
-const storage = multer.diskStorage({
-    destination: function(req,file,cb){
-        cb(null,'uploads/')
-    },
-    filename: function(req,file,cb){
-        cb(null,Date.now() + path.extname(file.originalname))
-    }
-})
-
-const upload = multer({
-    storage
-})
 
 // middlewares
 
-const { auth, authUnverified } = require('../middlewares/auth')
-const { filters } = require('../middlewares/filters')
+const { auth } = require('../middlewares/auth')
 const userController = require('../controllers/user-controller')
 
 
@@ -31,13 +15,14 @@ const userController = require('../controllers/user-controller')
 
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
-passport.use(new FacebookStrategy({
-    clientID: process.env.FACEBOOK_APP_ID,
-    clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-    profileFields: ['id', 'displayName', 'email']
-  },
-  userController.facebookPassport
+passport.use(new FacebookStrategy(
+    {
+        clientID: process.env.FACEBOOK_APP_ID,
+        clientSecret: process.env.FACEBOOK_APP_SECRET,
+        callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+        profileFields: ['id', 'displayName', 'email']
+    },
+    userController.passportCallbackOauth2
 ));
 passport.use(new GoogleStrategy(
     {
@@ -45,19 +30,23 @@ passport.use(new GoogleStrategy(
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: process.env.GOOGLE_CALLBACK_URL
     },
-    userController.googlePassport
+    userController.passportCallbackOauth2
 ))
 
 router.get('/auth/google',  passport.authenticate('google', { scope: ['profile','email'] }))
 router.get('/auth/facebook',  passport.authenticate('facebook', {scope:'email'}))
-router.get('/auth/google/callback', passport.authenticate('google'), userController.googleCallback);
-router.get('/auth/facebook/callback', passport.authenticate('facebook', { scope: 'email'}), userController.facebookCallback)
+router.get('/auth/google/callback', passport.authenticate('google'), userController.Oauth2Callback);
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { scope: 'email'}), userController.Oauth2Callback)
 
 
 // login routes
 
 router.get('/login', (req,res) => {return res.render('./views/login')})
-router.get('/login-success', (req,res) => res.render('./views/login-success'))
-router.get('/login-password', (req,res) => res.render('./views/login-password'))
+router.get('/login-oauth', (req,res) => {
+    return res.render('./views/login-oauth', {status:req.query.status,message:req.query.message, token:req.session.accessToken})
+})
+router.get('/login-set-password', (req,res) => res.render('./views/login-password'))
+router.post('/set-password', userController.setPassword)
+router.post('/signout', userController.signout)
 
 module.exports = router

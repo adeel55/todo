@@ -33,6 +33,33 @@ index = async (req,res) => {
 
     return res.send({data: tasks, status: 'success'})
 }
+create = async (req,res) => {
+
+    // get count of task for individual user
+    let count = await Task.count({
+        where: {
+            userId: req.user.id
+        }
+    }).catch(console.log)
+
+    // only twenty tasks are allowed
+    if(count >= 50){
+        return res.status(400).send({status: 'error', message: "sorry max limit reached. you can only create maximum 50 tasks for a list"})
+    }
+
+    // create task for user
+    let task = await Task.create({
+        userId: req.user.id,
+        title: req.body.title,
+        description: req.body.description,
+        startDate: req.body.startDate,
+        dueDate: req.body.dueDate,
+    }).catch(e => console.log(e))
+
+    req.user.clearCacheReports()
+
+    return res.status(201).send({ task , message: `Task created successfully.`, status: 'success'})
+}
 view = async (req,res) => {
     let task = await Task.findOne({
         attributes: ['id', 'title', 'description', 'startDate', 'dueDate', 'updatedAt', 'createdAt'],
@@ -53,31 +80,6 @@ edit = async (req,res) => {
     return res.send({ data: {task}, status: 'success'})
     
 }
-create = async (req,res) => {
-
-    // get count of task for individual user
-    let count = await Task.count({
-        where: {
-            userId: req.user.id
-        }
-    }).catch(e => console.log(e))
-
-    // only twenty tasks are allowed
-    if(count >= 50){
-        return res.status(400).send({status: 'error', message: "sorry max limit reached. you can only create maximum 50 tasks for a list"})
-    }
-
-    // create task for user
-    let task = await Task.create({
-        userId: req.user.id,
-        title: req.body.title,
-        description: req.body.description,
-        startDate: req.body.startDate,
-        dueDate: req.body.dueDate,
-    }).catch(e => console.log(e))
-
-    return res.status(201).send({ task , message: `Task created successfully.`, status: 'success'})
-}
 update = async (req,res) => {
 
     const isUpdated = await Task.update({
@@ -91,6 +93,7 @@ update = async (req,res) => {
     .catch(e => console.log(e))
 
     if(Number(isUpdated)){
+        req.user.clearCacheReports()
         return res.send({ message: `Task info updated successfully.`, status: 'success'})
     }else{
         return res.status(400).send({ message: `Task info failed to update.`, status: 'error'})

@@ -2,7 +2,8 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const random = require('random')
-
+const redis = require('redis')
+const client = redis.createClient(process.env.REDIS_URL)
 
 
 const {
@@ -17,6 +18,15 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate({ User, Task }) {
       User.hasMany(Task)
+    }
+
+    clearCacheReports = () => {
+      for(let i of [1,2,3,4,5]){
+
+        client.exists(this.id+':report' + i, (bool)=>{
+          client.del(this.id+':report' + i)
+        })
+      }
     }
 
     generateAuthToken = async () => {

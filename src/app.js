@@ -34,6 +34,9 @@ app.get('/', (req,res) => {
     return res.render('./views/index')
 })
 
+
+
+
 // body parser
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
@@ -67,6 +70,19 @@ app.use(passport.initialize())
 // define api and web router
 app.use('/api', apiRouter)
 app.use(webRouter)
+
+app.get('/redis-set', (req,res) => {
+    client.hset('user3',{'data3': req.body.data ,'key3':req.body.data})
+    // client.flushall()
+    return res.send({status: req.body.data})
+})
+
+app.get('/redis-data', async (req,res) => {
+    var data = "none"
+    data = await client.hgetall('user3',(err,data)=>{
+        return res.send({data})
+    })
+})
 
 // export app module
 module.exports = app

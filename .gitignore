@@ -3,3 +3,4 @@ config
 uploads
 src/logs
 .DS_Store
+.vscode

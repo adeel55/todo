@@ -1,4 +1,4 @@
-const { User, Task , Attachment,Sequelize,Sequelize:{ Op }, sequelize } = require('../../models')
+const { User, Task , Attachment, Sequelize:{ Op }, sequelize } = require('../../models')
 const path = require('path')
 const fs = require('fs')
 
@@ -127,8 +127,6 @@ destroy = async (req,res) => {
 
 }
 
-
-
 attachments = async (req, res) => {
     // console.log(req.body.taskId);
     if(!req.file)
@@ -143,7 +141,6 @@ attachments = async (req, res) => {
 
     return res.send({ status:"success" , message: "file uploaded successfully" })
 }
-
 
 similarTasks = async (req, res) => {
 

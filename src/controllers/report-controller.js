@@ -3,7 +3,7 @@ const client = redis.createClient(process.env.REDIS_URL)
 const { promisify } = require('util')
 client.get = promisify(client.get)
 client.hget = promisify(client.hget)
-const { Task , Attachment,Sequelize,Sequelize:{ Op }, sequelize } = require('../../models')
+const { Task , Attachment, Sequelize:{ Op }, sequelize } = require('../../models')
 const path = require('path')
 
 index = async (req,res) => {

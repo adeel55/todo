@@ -1,19 +1,23 @@
-const redis = require('redis')
-const client = redis.createClient(process.env.REDIS_URL)
+import { connect } from "http2"
+import redis from "redis"
+const client = redis.createClient({
+        port: process.env.REDIS_PORT,
+        host: process.env.REDIS_HOST,
+        password: process.env.REDIS_PASS,
+        no_ready_check: true
+    })
 const { promisify } = require('util')
 client.get = promisify(client.get)
 client.hget = promisify(client.hget)
+client.on("connect", function() {
+    console.error("redis connected");
+});
+client.on("error", function(error) {
+    console.error(error);
+});
 const { Task , Attachment, Sequelize:{ Op }, sequelize } = require('../../models')
-const path = require('path')
 
-index = async (req,res) => {
-  
-}
-totalTasks = async (req,res) => {
-
-    // client.flushall()
-
-    // return res.send({status: 'flushed all'});
+export async function totalTasks(req,res) {
 
     var data = {
         completed: 0,
@@ -36,7 +40,7 @@ totalTasks = async (req,res) => {
         }).catch(e => console.log(e))
 
  
-        for(val of tasks) {
+        for(let val of tasks) {
             data.total = Number(val.count) + Number(data.total)
             if(val.status == 1) data.completed = val.count
             if(val.status == 0) data.incompleted = val.count
@@ -52,7 +56,7 @@ totalTasks = async (req,res) => {
     return res.send({ data, status: 'success'})
 
 }
-averageCompletedTasksPerDay = async (req,res) => {
+export async function averageCompletedTasksPerDay(req,res) {
 
     var data = {
         averageDailyTaskCompleted: 'none',
@@ -69,18 +73,20 @@ averageCompletedTasksPerDay = async (req,res) => {
             attributes: [[sequelize.fn('count','id'),'dailytasks']],
             where: {
                 userId: req.user.id,
+                status: true
             },
             group: [['completedAt']]
         }).catch(e => console.log(e))
 
-        let total = 0
+        let total,avg = 0
+        if(dailyTaskCounts.length){
 
-        for(val of dailyTaskCounts){
-            total = Number(val.dataValues.dailytasks) + Number(total)
+            for(let val of dailyTaskCounts){
+                total = Number(val.dataValues.dailytasks) + Number(total)
+            }
+            avg = (total/dailyTaskCounts.length).toFixed(2)
         }
-
-        data.averageDailyTaskCompleted = (total/dailyTaskCounts.length).toFixed(2)
-
+        data.averageDailyTaskCompleted = avg
         client.set(req.user.id + `:report2`, JSON.stringify(data), 'EX', process.env.REDIS_EXPIRE)
 
     }else{
@@ -89,7 +95,7 @@ averageCompletedTasksPerDay = async (req,res) => {
 
     return res.send({ data, status: 'success'})
 }
-overDueTasks = async (req,res) => {
+export async function overDueTasks(req,res) {
 
     var data = {
         overDueTasks: 'none',
@@ -123,7 +129,7 @@ overDueTasks = async (req,res) => {
 
     return res.send({ data, status: 'success'})
 }
-maxTasksCompletionDay = async (req,res) => {
+export async function maxTasksCompletionDay(req,res) {
 
 
     var data = {
@@ -171,7 +177,7 @@ maxTasksCompletionDay = async (req,res) => {
         status: 'success'
     })
 }
-tasksOpenInDayOfWeek = async (req,res) => {
+export async function tasksOpenInDayOfWeek(req,res) {
 
     var data = {
         source: 'mysql db'
@@ -183,7 +189,7 @@ tasksOpenInDayOfWeek = async (req,res) => {
     if(!cacheData)
     {
 
-        let sql = "SELECT DAYNAME(`startDate`) as `day`, count(*) AS `tasksopened` FROM `Tasks` AS `Task` WHERE `Task`.`userId` = 1 GROUP BY DAYNAME(`startDate`)"
+        let sql = "SELECT DAYNAME(`startDate`) as `day`, count(*) AS `tasksopened` FROM `Tasks` AS `Task` WHERE `Task`.`userId` = " + req.user.id + " GROUP BY DAYNAME(`startDate`)"
 
         let allTasks = await sequelize.query(sql, null, {raw: true})
 
@@ -200,13 +206,4 @@ tasksOpenInDayOfWeek = async (req,res) => {
     }
     
     return res.send({ data, status: 'success'})
-}
-
-
-module.exports = {
-    totalTasks,
-    averageCompletedTasksPerDay,
-    overDueTasks,
-    maxTasksCompletionDay,
-    tasksOpenInDayOfWeek,
 }

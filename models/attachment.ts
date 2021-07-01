@@ -1,17 +1,28 @@
 'use strict';
-const {
+import {
   Model
-} = require('sequelize');
-module.exports = (sequelize, DataTypes) => {
-  class Attachment extends Model {
+} from "sequelize"
+
+
+interface AttachmentAttributes {
+  taskId: number
+  name: string
+}
+
+
+module.exports = (sequelize: any, DataTypes: any) => {
+  class Attachment extends Model<AttachmentAttributes> implements AttachmentAttributes {
+
+    taskId!: number;
+    name!: string;
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate({ Attachment , Task }) {
+    static associate(models: any) {
       // define association here
-      Attachment.belongsTo(Task)
+      models.Attachment.belongsTo(models.Task)
     }
   };
   Attachment.init({

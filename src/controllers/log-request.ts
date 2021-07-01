@@ -2,7 +2,7 @@ const fs = require("fs")
 const winston = require("winston")
 const DailyRotateFile = require('winston-daily-rotate-file');
 
-make = (req,res,next) => {
+const makeLog = (req:any,res:any,next:any) => {
 
     let ip = req.ip == "::1" ? "127.0.0.1": req.ip
 
@@ -42,6 +42,4 @@ make = (req,res,next) => {
 }
 
 
-module.exports = {
-    make
-}
+export default  makeLog

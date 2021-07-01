@@ -3,7 +3,7 @@ const notification = require("./notification-controller")
 
 
 
-sendReminderEmail = async () => {
+export default async function sendReminderEmail () {
     // get all users having any task deeadline today
     let users = await User.findAll({
         attributes: ['fullName','email'],
@@ -36,8 +36,4 @@ sendReminderEmail = async () => {
             console.log(res.response)
         }
     }
-}
-
-module.exports = {
-    sendReminderEmail
 }

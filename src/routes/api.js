@@ -1,7 +1,7 @@
-const express = require('express')
-const path = require('path')
+import express from "express"
+import path from "path"
 const router = new express.Router()
-const multer = require('multer')
+import multer from "multer"
 
 // multer filer upload storage
 const storage = multer.diskStorage({
@@ -19,12 +19,17 @@ const upload = multer({
 
 // middlewares
 
-const { auth, authUnverified } = require('../middlewares/auth')
-const { filters } = require('../middlewares/filters')
-const userController = require('../controllers/user-controller')
-const taskController = require('../controllers/task-controller')
-const scheduleController = require('../controllers/scheduled-controller')
-const reports = require('../controllers/report-controller')
+import { auth, authUnverified } from "../middlewares/auth"
+import  filters from "../middlewares/filters"
+import * as user from "../controllers/user-controller"
+import * as taskController from "../controllers/task-controller"
+const {
+    totalTasks,
+    averageCompletedTasksPerDay,
+    overDueTasks,
+    maxTasksCompletionDay,
+    tasksOpenInDayOfWeek,
+} = require('../controllers/report-controller')
 
 
 
@@ -33,14 +38,14 @@ const reports = require('../controllers/report-controller')
 
 
 //User
-router.post('/v1/signin', userController.signin)
-router.post('/v1/signup', userController.signup)
-router.post('/v1/verify-email', [authUnverified], userController.verifyEmail)
-router.post('/v1/signout', [auth], userController.signout)
-router.get('/v1/users', [filters], userController.index)
-router.get('/v1/user/:id/edit', [auth], userController.edit)
-router.put('/v1/user/:id', [auth], userController.update)
-router.delete('/v1/user/:id', [auth], userController.destroy)
+router.post('/v1/signin', user.signin)
+router.post('/v1/signup', user.signup)
+router.post('/v1/verify-email', authUnverified , user.verifyEmail)
+router.post('/v1/signout', [auth], user.signout)
+router.get('/v1/users', [filters], user.index)
+router.get('/v1/user/:id/edit', [auth], user.edit)
+router.put('/v1/user/:id', [auth], user.update)
+router.delete('/v1/user/:id', [auth], user.destroy)
 
 
 //Task
@@ -67,11 +72,11 @@ router.post('/v1/upload/', [
 
 // Reports
 
-router.get('/v1/report/totalTasks', [ auth ], reports.totalTasks)
-router.get('/v1/report/averageCompletedTasksPerDay', [ auth ], reports.averageCompletedTasksPerDay)
-router.get('/v1/report/overDueTasks', [ auth ], reports.overDueTasks)
-router.get('/v1/report/maxTasksCompletionDay', [ auth ], reports.maxTasksCompletionDay)
-router.get('/v1/report/tasksOpenInDayOfWeek', [ auth ], reports.tasksOpenInDayOfWeek)
+router.get('/v1/report/totalTasks', [ auth ], totalTasks)
+router.get('/v1/report/averageCompletedTasksPerDay', [ auth ], averageCompletedTasksPerDay)
+router.get('/v1/report/overDueTasks', [ auth ], overDueTasks)
+router.get('/v1/report/maxTasksCompletionDay', [ auth ], maxTasksCompletionDay)
+router.get('/v1/report/tasksOpenInDayOfWeek', [ auth ], tasksOpenInDayOfWeek)
 
 
 
@@ -82,10 +87,10 @@ router.get('/v1/similar-tasks', auth, taskController.similarTasks)
 
 
 // Test email endpoints
-router.get('/v1/test-reminder-email', scheduleController.sendReminderEmail)
-router.get('/v1/test-sessions', taskController.sessions)
-router.get('/v1/test-sessions-get', taskController.sessionsGet)
+// router.get('/v1/test-reminder-email', scheduleController.sendReminderEmail)
+// router.get('/v1/test-sessions', taskController.sessions)
+// router.get('/v1/test-sessions-get', taskController.sessionsGet)
 
 
 
-module.exports = router
+export default router

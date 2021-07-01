@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs')
 const { User , Sequelize:{ Op } } = require('../../models')
 const notification = require("./notification-controller")
 
-index = async (req,res) => {
+export async function index (req, res) {
     let where = { }
     if(req.query.search){
         where = {
@@ -38,53 +38,68 @@ index = async (req,res) => {
 
     return res.send({data: users, status: 'success'})
 }
+export async function signup (req, res) {
 
-signup = async (req, res) => {
+    try {
+        
+        let existUser = await User.findOne({
+            where: {
+                email: req.body.email
+            }
+        }).catch(e => console.log(e))
 
-   try {
-    let existUser = await User.findOne({
-        where: {
-            email: req.body.email
+        if (existUser) {
+            return res.status(400).send({
+                status: "error",
+                message: "email already taken"
+            })
         }
-    }).catch(e => console.log(e))
 
-    if(existUser){
-        return res.status(400).send({ status: "error" , message: "email already taken"})
+        const user = await User.create({
+            fullName: req.body.fullName,
+            email: req.body.email,
+        }).catch(e => {
+            console.log(e)
+            throw Error("Invalid email")
+        })
+
+        await user.generateAndSaveNewPassword(req.body.password)
+
+        // generate and send email-verification code notification by email
+        let code = await user.generateEmailVerificationCode()
+        notification.email(req.body.email,
+            'Email Verification Code',
+            'email-verification-code', {
+            code
+        })
+
+        let token = await user.generateAuthToken()
+
+        let userSend = {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            token
+        }
+
+        return res.send({
+            user: userSend,
+            status: 'success',
+            message: "An email has been sent to you with verification code please verify your email with that 6 digit code.",
+            token
+        })
+
+    } catch (err) {
+
+        return res.send({
+            status: 'false',
+            message: "bad request",
+            err
+        })
     }
-
-    const user = await User.create({
-        fullName: req.body.fullName,
-        email: req.body.email,
-    }).catch(e => {
-        console.log(e)
-        throw Error("Invalid email")
-    })
-
-    await user.generateAndSaveNewPassword(req.body.password)
-    
-    // generate and send email-verification code notification by email
-    let code = await user.generateEmailVerificationCode()
-    notification.email(req.body.email,'Email Verification Code','email-verification-code',{code})
-    
-    let token = await user.generateAuthToken()
-
-    let userSend = {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        token
-    }
-    
-    return res.send({ user: userSend, status: 'success' , message : "An email has been sent to you with verification code please verify your email with that 6 digit code.", token})
-
-   } catch(err){
-
-       return res.send({ status: 'false' , message : "bad request"})
-   }
 
 }
-
-verifyEmail = async (req, res) => {
+export async function verifyEmail (req, res) {
 
     if(req.user.emailVerificationCode == req.body.emailVerificationCode){
         req.user.emailVerifiedAt = new Date()
@@ -100,8 +115,7 @@ verifyEmail = async (req, res) => {
         })
     }
 }
-
-signin = async (req, res) => {
+export async function signin (req, res) {
 
     const user = await User.findOne({
         where: {
@@ -135,8 +149,7 @@ signin = async (req, res) => {
 
 
 }
-
-signout = async (req, res) => {
+export async function signout(req, res) {
     if(!req.user){
         const token = req.body.token || null
         const user = await User.findOne({ where: { token }})
@@ -146,8 +159,7 @@ signout = async (req, res) => {
     await req.user.signOut()
     return res.send({ status: "success", message: "signout successfully" })
 }
-
-edit = async (req,res) => {
+export async function edit (req,res) {
     let user = await User.findOne({
         attributes: ['id','fullName','email','updatedAt','createdAt'],
         where: {
@@ -156,7 +168,7 @@ edit = async (req,res) => {
     }).catch(e => console.log(e))
     return res.send({ data: {user}, status: 'success'})
 }
-update = async (req,res) => {
+export async function update (req,res) {
     await User.update({
         fullName: req.body.user.fullName,
         email: req.body.user.email,
@@ -168,18 +180,11 @@ update = async (req,res) => {
 
     return res.send({ message: `User info updated successfully.`, status: 'success'})
 }
-destroy = async (req,res) => {
+export async function destroy (req,res) {
     await User.destroy({where:{id:req.params.id}}).catch(e => console.log(e))
     return res.send({ message: 'User deleted!', status: 'success'})
 }
-
-sendEmailVerificationCode = async(code) => {
-    // send email
-    // console.log('Email verificcation code: ')
-    // console.log(code)
-}
-
-setPassword = async (req,res) => {
+export async function setPassword(req,res) {
     try {
         const token = req.body.token || null
         const user = await User.findOne({ where: { token }})
@@ -192,8 +197,7 @@ setPassword = async (req,res) => {
         return res.status(400).send({status: 'bad request', message: 'error occur during changing password'})
     }
 }
-
-passportCallbackOauth2 = async (accessToken, refreshToken, profile, cb) => {
+export async function passportCallbackOauth2  (accessToken, refreshToken, profile, cb) {
     const user = await User.findOne({
         where: {
             email: profile._json.email,
@@ -212,7 +216,7 @@ passportCallbackOauth2 = async (accessToken, refreshToken, profile, cb) => {
     }
     return cb(null,profile);
 }
-Oauth2Callback = async (req, res) => {
+export async function Oauth2Callback(req, res)  {
     // console.log(req.session)
     let status,message = ""
     const user = await User.findOne({ 
@@ -234,16 +238,12 @@ Oauth2Callback = async (req, res) => {
 }
 
 
-module.exports = {
+export default {
     index,
     signup,
     verifyEmail,
     signin,
-    signout,
     edit,
     update,
     destroy,
-    setPassword,
-    passportCallbackOauth2,
-    Oauth2Callback,
 }

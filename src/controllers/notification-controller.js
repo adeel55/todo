@@ -1,8 +1,8 @@
-const nodemailer = require("nodemailer")
-const hbs = require("nodemailer-express-handlebars")
-const path = require("path")
+import nodemailer from "nodemailer"
+import hbs from "nodemailer-express-handlebars"
+import path from "path"
 
-email = async (to,subject,template,context) => {
+export async function email(to,subject,template,context) {
 
      // initialize transport object
      var transporter = nodemailer.createTransport({
@@ -38,8 +38,4 @@ email = async (to,subject,template,context) => {
     let info = await transporter.sendMail(mailOptions);
     return info
 
-}
-
-module.exports = {
-    email
 }

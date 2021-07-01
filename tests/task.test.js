@@ -1,10 +1,10 @@
-const request = require("supertest")
-const app = require("../src/app")
+import request from "supertest"
+import app from "../src/app"
 // const bcrypt = require('bcryptjs')
 // const userSeed = require("../seeders/20210608054130-users")
 const { User , Task,  Sequelize,Sequelize:{ Op } } = require('../models')
-const { user1, user2 } = require("./fixtures/db/db")
-var { task } = require("./fixtures/db/db")
+import { user1, user2 } from "./fixtures/db/db"
+import { task } from "./fixtures/db/db"
 
 beforeAll(async () => {
 

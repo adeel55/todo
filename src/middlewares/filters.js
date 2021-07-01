@@ -1,5 +1,5 @@
 const { Op } = require('sequelize')
-filters = (req,res,next) => {
+export default function filters (req,res,next) {
     let date = {}
     req.filter = {}
     let offset = 0
@@ -27,8 +27,4 @@ filters = (req,res,next) => {
     req.filter.date = date
     
     next()
-}
-
-module.exports = {
-    filters
 }

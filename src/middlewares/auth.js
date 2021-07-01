@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const { User } = require('../../models')
 
 
-auth = async (req,res,next) => {
+export async function auth (req,res,next) {
     try {
         const token = req.header('Authorization').replace('Bearer ', '')
         const user = await User.findOne({ where: { token }})
@@ -21,7 +21,7 @@ auth = async (req,res,next) => {
     }
 }
 
-authUnverified = async (req,res,next) => {
+export async function authUnverified(req,res,next) {
     try {
         const token = req.header('Authorization').replace('Bearer ', '')
         const user = await User.findOne({ where: { token }})
@@ -34,9 +34,4 @@ authUnverified = async (req,res,next) => {
     } catch (e) {
         res.status(401).send({ message: 'Authentication failed or session expired please signin again.' })
     }
-}
-
-module.exports = {
-    auth,
-    authUnverified
 }

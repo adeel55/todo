@@ -9,8 +9,10 @@ const router = new express.Router()
 
 const { auth } = require('../middlewares/auth')
 const userController = require('../controllers/user-controller')
+const { passportCallbackOauth2, Oauth2Callback, setPassword, signout } = require('../controllers/user-controller')
+// console.log(typeof passportCallbackOauth2)
 
-
+// return;
 // Oauth 2.0  Passport
 
 passport.serializeUser((user, done) => done(null, user));
@@ -22,7 +24,7 @@ passport.use(new FacebookStrategy(
         callbackURL: process.env.FACEBOOK_CALLBACK_URL,
         profileFields: ['id', 'displayName', 'email']
     },
-    userController.passportCallbackOauth2
+    passportCallbackOauth2
 ));
 passport.use(new GoogleStrategy(
     {
@@ -30,13 +32,13 @@ passport.use(new GoogleStrategy(
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: process.env.GOOGLE_CALLBACK_URL
     },
-    userController.passportCallbackOauth2
+    passportCallbackOauth2
 ))
 
 router.get('/auth/google',  passport.authenticate('google', { scope: ['profile','email'] }))
 router.get('/auth/facebook',  passport.authenticate('facebook', {scope:'email'}))
-router.get('/auth/google/callback', passport.authenticate('google'), userController.Oauth2Callback);
-router.get('/auth/facebook/callback', passport.authenticate('facebook', { scope: 'email'}), userController.Oauth2Callback)
+router.get('/auth/google/callback', passport.authenticate('google'), Oauth2Callback);
+router.get('/auth/facebook/callback', passport.authenticate('facebook', { scope: 'email'}), Oauth2Callback)
 
 
 // login routes
@@ -46,7 +48,7 @@ router.get('/login-oauth', (req,res) => {
     return res.render('./views/login-oauth', {status:req.query.status,message:req.query.message, token:req.session.accessToken})
 })
 router.get('/login-set-password', (req,res) => res.render('./views/login-password'))
-router.post('/set-password', userController.setPassword)
-router.post('/signout', userController.signout)
+router.post('/set-password', setPassword)
+router.post('/signout', signout)
 
-module.exports = router
+export default router

@@ -183,23 +183,15 @@ export async function tasksOpenInDayOfWeek(req,res) {
         source: 'mysql db'
     }
 
-
     // check if cache exist 
     var cacheData = await client.get(req.user.id + `:report5`)
     if(!cacheData)
     {
-
         let sql = "SELECT DAYNAME(`startDate`) as `day`, count(*) AS `tasksopened` FROM `Tasks` AS `Task` WHERE `Task`.`userId` = " + req.user.id + " GROUP BY DAYNAME(`startDate`)"
-
         let allTasks = await sequelize.query(sql, null, {raw: true})
 
-
-
         data = { ...allTasks[0], ...data}        
-
         client.set(req.user.id + `:report5`, JSON.stringify(data), 'EX', process.env.REDIS_EXPIRE)
-
-
 
     } else {
         data = {  ...JSON.parse(cacheData), source: 'redis cache'}

@@ -163,7 +163,7 @@ export async function similarTasks (req, res) {
         where: {
             userId: req.user.id,
         },
-        group: ['title'],
+        group: ['title','description'],
         having: {
             taskCount: {
                 [Op.gt]: 1

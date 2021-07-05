@@ -1,0 +1,447 @@
+openapi: '3.0.2'
+info:
+  title: Todo APIs
+  version: '1.0'
+  description: "Todo apis documentation"
+servers:
+  - url: http://localhost:3000/
+paths:
+  /api/v1/signup:
+    post:
+      tags:
+        - auth
+      summary: create new user in database
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignupReq'
+      responses:
+        201:
+          description: user created
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/UserSignupRes'
+        400:
+          description: user already exists
+  /api/v1/verify-email:
+    post:
+      tags:
+        - auth
+      summary: verify user email address
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserVerifyReq'
+      responses:
+        200:
+          description: user email verified
+  /api/v1/signin:
+    post:
+      tags:
+        - auth
+      summary: signin user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSigninReq'
+      responses:
+        200:
+          description: user loggedin
+  /api/v1/user/profile:
+    get:
+      tags:
+        - profile
+      summary: get user profile
+      security: 
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: user profile fetched
+    put:
+      tags:
+        - profile
+      summary: update user profile
+      security: 
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: user profile updated
+  /api/v1/user/{id}:
+    delete:
+      tags:
+        - user
+      summary: delete user
+      parameters:
+        - name: id
+          in: path
+          description: User ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: user deleted
+  /api/v1/tasks:
+    get:
+      tags:
+        - task
+      security: 
+        - bearerAuth: []
+      summary: return list of all tasks of current user
+      responses:
+        200:
+          description: list of all task of this user
+          content:
+            application/json: 
+              schema:
+                type: object
+                $ref: '#components/schemas/Task'
+        401:
+          $ref: '#components/responses/UnauthorizedError'
+  /api/v1/task:
+    post:
+      tags:
+        - task
+      security: 
+        - bearerAuth: []
+      summary: create new task
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateReq'
+      responses:
+        200:
+          description: task created
+        401:
+          $ref: '#components/responses/UnauthorizedError'
+  /api/v1/task/{id}:
+    get:
+      tags:
+        - task
+      security: 
+        - bearerAuth: []
+      summary: return specific task
+      parameters:
+        - name: id
+          in: path
+          description: Task ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: get task
+        401:
+          $ref: '#components/responses/UnauthorizedError'
+    put:
+      tags:
+        - task
+      security: 
+        - bearerAuth: []
+      summary: update task
+      parameters:
+        - name: id
+          in: path
+          description: Task ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateReq'
+      responses:
+        200:
+          description: task updated
+        401:
+          $ref: '#components/responses/UnauthorizedError'
+    delete:
+      tags:
+        - task
+      security: 
+        - bearerAuth: []
+      summary: delete task
+      parameters:
+        - name: id
+          in: path
+          description: Task ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: task deleted
+        401:
+          $ref: '#components/responses/UnauthorizedError'
+  /api/v1/users:
+    get:
+      tags:
+        - user
+      security: 
+        - bearerAuth: []
+      summary: return list of all users
+      responses:
+        200:
+          description: list of all task of this user
+        401:
+          $ref: '#components/responses/UnauthorizedError'
+  /api/v1/report/totalTasks:
+    get:
+      tags:
+        - reports
+      security: 
+        - bearerAuth: []
+      summary: report 1
+      responses:
+        200:
+          description: report 1 
+  /api/v1/report/averageCompletedTasksPerDay:
+    get:
+      tags:
+        - reports
+      security: 
+        - bearerAuth: []
+      summary: report 2
+      responses:
+        200:
+          description: report 2 
+  /api/v1/report/overDueTasks:
+    get:
+      tags:
+        - reports
+      security: 
+        - bearerAuth: []
+      summary: report 3
+      responses:
+        200:
+          description: report 3 
+  /api/v1/report/maxTasksCompletionDay:
+    get:
+      tags:
+        - reports
+      security: 
+        - bearerAuth: []
+      summary: report 4
+      responses:
+        200:
+          description: report 4 
+  /api/v1/report/tasksOpenInDayOfWeek:
+    get:
+      tags:
+        - reports
+      security: 
+        - bearerAuth: []
+      summary: report 5
+      responses:
+        200:
+          description: report 5 
+  /api/v1/similar-tasks:
+    get:
+      tags:
+        - algorithms
+      security: 
+        - bearerAuth: []
+      summary: duplicated tasks
+      responses:
+        200:
+          description: list of all duplicated task with repeated times
+
+
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+          - fullName
+          - email
+          - password
+      properties:
+          id:
+              type: integer
+              description: auto-increment key
+          fullName:
+              type: string
+              description: full name (first name + last name) of user
+          email:
+              type: string
+              description: email of user
+          password:
+              type: string
+              description: password string for user account
+          token:
+              type: string
+              description: auth token for user to keep logged-in/logout
+          emailVerifiedAt:
+              type: string
+              description: email verification date and time
+          emailVerificationCode:
+              type: string
+              description: email confirmation code that is emailed to user for his email verification
+          updatedAt:
+              type: string
+              description: date and time at user creeated in DB
+          createdAt:
+              type: string
+              description: date and time at user attributes changes
+      example:
+          fullName: Muhammad Adeel
+          email: Muhammad.Adeel@gmail.com
+          password: adeel12345
+    UserSignupReq:
+      type: object
+      required:
+        - fullName
+        - email
+        - password
+      properties:
+        fullName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      example:
+        fullname: Muhammad Adeel
+        email: Muhammad.Adeel@gmail.com
+        password: adeel12345
+    UserSignupRes:
+      properties:
+        user:
+            type: object
+            description: auto-increment key
+            properties:
+              id:
+                type: integer
+                description: auto-increment key
+              fullName:
+                  type: string
+                  description: full name (first name + last name) of user
+              email:
+                  type: string
+                  description: email of user
+              token:
+                  type: string
+                  description: auth token for user to keep logged-in/logout
+        status:
+            type: string
+            description: full name (first name + last name) of user
+        message:
+            type: string
+            description: password string for user account
+        token:
+            type: string
+            description: auth token for user to keep logged-in/logout
+    UserSigninReq:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      example:
+        email: Muhammad.Adeel@gmail.com
+        password: adeel12345
+    UserVerifyReq:
+      type: object
+      required:
+        - emailVerificationCode
+      properties:
+        emailVerificationCode:
+          type: string
+      example:
+        emailVerificationCode: 123456
+    Task:
+      type: object
+      required:
+        - title
+        - description
+        - userId
+      properties:
+        id:
+          type: integer
+          description: auto-increment key
+        title:
+          type: string
+          description: a small description about the task
+        description:
+          type: string
+          description: a complete description about the task being created
+        userId:
+          type: integer
+          description: author id of the task
+        updatedAt:
+          type: string
+          description: date and time at task creeated in DB
+        createdAt:
+          type: string
+          description: date and time at task attributes changes
+      example:
+        title: Mark Attendance
+        description: mark attendance for all employees befor leave
+        userId: 1
+    TaskCreateReq:
+      type: object
+      required:
+        - title
+        - description
+      properties:
+        title:
+          type: string
+          description: a small description about the task
+        description:
+          type: string
+          description: a complete description about the task being created
+      example:
+        title: Mark Attendance
+        description: mark attendance for all employees befor leave
+  
+  responses:
+      UnauthorizedError:
+        description:  Access token is missing or invalid
+  
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+      
+
+     
+
+
+
+
+
+

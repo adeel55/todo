@@ -1,5 +1,7 @@
 import express from "express"
 import bodyParser from 'body-parser'
+import swaggerUI from 'swagger-ui-express'
+import swaggerDocs from 'swagger-jsdoc'
 import cors from 'cors'
 import helmet from 'helmet'
 import hbs from 'hbs'
@@ -35,7 +37,25 @@ app.get('/', (req,res) => {
 })
 
 
+/*************** Swagger Docs APIs ********************/
 
+const swagger =  swaggerDocs({
+    definition: {
+        info: {
+            title: "Todo APIs",
+            version: '1.0.0',
+            description: "todo apis documentation of released version"
+        },
+        openapi: "3.0.0",
+        servers: [{
+            url: "http://localhost:3000/"
+        }],
+    },
+    apis: ["./docs.yml"]
+})
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swagger))
+
+/*************** Swagger Docs APIs ********************/
 
 // body parser
 app.use(bodyParser.json());

@@ -78,7 +78,8 @@ export async function averageCompletedTasksPerDay(req,res) {
             group: [['completedAt']]
         }).catch(e => console.log(e))
 
-        let total,avg = 0
+        let total = 0
+        let avg = 0
         if(dailyTaskCounts.length){
 
             for(let val of dailyTaskCounts){

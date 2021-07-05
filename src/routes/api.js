@@ -3,6 +3,7 @@ import path from "path"
 const router = new express.Router()
 import multer from "multer"
 
+
 // multer filer upload storage
 const storage = multer.diskStorage({
     destination: function(req,file,cb){
@@ -43,8 +44,8 @@ router.post('/v1/signup', user.signup)
 router.post('/v1/verify-email', authUnverified , user.verifyEmail)
 router.post('/v1/signout', [auth], user.signout)
 router.get('/v1/users', [filters], user.index)
-router.get('/v1/user/:id/edit', [auth], user.edit)
-router.put('/v1/user/:id', [auth], user.update)
+router.get('/v1/user/profile', [auth], user.profile)
+router.put('/v1/user/profile', [auth], user.update)
 router.delete('/v1/user/:id', [auth], user.destroy)
 
 
@@ -92,5 +93,6 @@ router.get('/v1/similar-tasks', auth, taskController.similarTasks)
 // router.get('/v1/test-sessions-get', taskController.sessionsGet)
 
 
-
 export default router
+
+

@@ -82,7 +82,7 @@ export async function signup (req, res) {
             token
         }
 
-        return res.send({
+        return res.status(201).send({
             user: userSend,
             status: 'success',
             message: "An email has been sent to you with verification code please verify your email with that 6 digit code.",
@@ -91,7 +91,7 @@ export async function signup (req, res) {
 
     } catch (err) {
 
-        return res.send({
+        return res.status(400).send({
             status: 'false',
             message: "bad request",
             err
@@ -159,24 +159,27 @@ export async function signout(req, res) {
     await req.user.signOut()
     return res.send({ status: "success", message: "signout successfully" })
 }
-export async function edit (req,res) {
-    let user = await User.findOne({
-        attributes: ['id','fullName','email','updatedAt','createdAt'],
-        where: {
-            id: req.params.id,
-        }
-    }).catch(e => console.log(e))
-    return res.send({ data: {user}, status: 'success'})
+export async function profile (req,res) {
+    try{
+        let user = await User.findOne({
+            attributes: ['id','fullName','email','updatedAt','createdAt'],
+            where: {
+                id: req.user.id,
+            }
+        }).catch(e => console.log(e))
+        return res.send({ data: {user}, status: 'success'})
+    } catch(error){
+        return res.status(400).send({ error, status: 'error'})
+    }
 }
 export async function update (req,res) {
-    await User.update({
-        fullName: req.body.user.fullName,
-        email: req.body.user.email,
-    },
-    {   where: {id:req.params.id} }).catch(e => {
-        console.log(e)
-        return res.send({ message: `Sorry user email duplication error.`, status: 'error'})
+    const user = await User.findOne({   where: {id:req.user.id} })
+    .catch(error => {
+        return res.status(400).send({ error, message: `Sorry user email duplication error.`, status: 'error'})
     })
+
+    user.fullName = req.body.fullName
+    user.generateAndSaveNewPassword(req.body.password)
 
     return res.send({ message: `User info updated successfully.`, status: 'success'})
 }
@@ -235,15 +238,4 @@ export async function Oauth2Callback(req, res)  {
 
     return res.redirect(`/login-oauth?status=${status}&message=${message}`)
 
-}
-
-
-export default {
-    index,
-    signup,
-    verifyEmail,
-    signin,
-    edit,
-    update,
-    destroy,
 }

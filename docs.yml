@@ -52,6 +52,40 @@ paths:
       responses:
         200:
           description: user loggedin
+  /api/v1/pass-reset-email:
+    post:
+      tags:
+        - auth
+      summary: send user password reset link email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResetEmailReq'
+      responses:
+        200:
+          description: email sent succesfully
+  /api/v1/reset-pass-link/{token}:
+    post:
+      tags:
+        - auth
+      summary: set user a new password
+      parameters:
+        - name: token
+          in: path
+          description: Unique assword reset token
+          required: true
+          schema:
+            type: string
+            format: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserResetPassReq'
+      responses:
+        200:
+          description: user password reset successfully
   /api/v1/user/profile:
     get:
       tags:
@@ -425,6 +459,26 @@ components:
       example:
         title: Mark Attendance
         description: mark attendance for all employees befor leave
+    UserResetEmailReq:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          description: email that identify to user for reset password
+      example:
+        email: Muhammad.Adeel@gmail.com
+    UserResetPassReq:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          description: new password for user
+      example:
+        password: adeel121345
   
   responses:
       UnauthorizedError:

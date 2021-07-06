@@ -115,6 +115,72 @@ export async function verifyEmail (req, res) {
         })
     }
 }
+export async function sendPasswordResetEmail (req, res) {
+
+    // find the required user with provided email
+    const user = await User.findOne({
+        where: {
+            email: req.body.email
+        }
+    }).catch(e => {
+        return res.status(400).send({
+            status: "error",
+            message: "database error",
+        })
+    })
+    if(user) {
+        // find user and get token
+        const token = await user.generateAuthToken()
+        const link = process.env.BASE_URL + "/api/v1/reset-pass-link/" + token
+        // send email notification
+        notification.email(req.body.email,
+            'Reset Password',
+            'pass-reset-code', {
+            link
+        })
+        
+        return res.send({
+            message: "password reset email successfully sent",
+            status: "success",
+        })
+
+    }else{
+        // return response with error if user not found
+        return res.status(400).send({
+            status: "error",
+            message: "sorry! user not found with provided email. please signup first.",
+        })
+
+    }
+}
+export async function resetPasswordByLink (req, res) {
+
+    // find the required user with provided email
+    const user = await User.findOne({
+        where: {
+            token: req.params.token
+        }
+    }).catch(e => {
+        return res.status(400).send({
+            status: "error",
+            message: "database error",
+        })
+    })
+    if(user) {
+        // find user and set new password
+        await user.generateAndSaveNewPassword(req.body.password)
+        return res.send({
+            message: "password reset successfully",
+            status: "success",
+        })
+    }else{
+        // return response with error if user not found
+        return res.status(400).send({
+            status: "error",
+            message: "sorry! link expired",
+        })
+    }
+}
 export async function signin (req, res) {
 
     const user = await User.findOne({

@@ -47,6 +47,8 @@ router.get('/v1/users', [filters], user.index)
 router.get('/v1/user/profile', [auth], user.profile)
 router.put('/v1/user/profile', [auth], user.update)
 router.delete('/v1/user/:id', [auth], user.destroy)
+router.post('/v1/pass-reset-email', user.sendPasswordResetEmail)
+router.post('/v1/reset-pass-link/:token', user.resetPasswordByLink)
 
 
 //Task

@@ -2,6 +2,37 @@ const { User, Task , Attachment, Sequelize:{ Op }, sequelize } = require('../../
 const path = require('path')
 const fs = require('fs')
 
+export async function test (req,res) {
+    let where = { }
+    if(req.query.search){
+        where = {
+            ...where,
+            [Op.or]: [
+                {
+                    title: {
+                        [Op.substring]: req.query.search
+                    }
+                },
+                {
+                    description: {
+                        [Op.substring]: req.query.search
+                    }
+                }
+            ]
+        }
+    }
+    if(req.filter.hasDate)  where['createdAt'] = req.filter.date
+    
+    let tasks = await Task.findAndCountAll({
+        attributes: ['id', 'title', 'description', 'status', 'startDate', 'dueDate', 'updatedAt', 'createdAt'],
+        where,
+        order: [['createdAt', 'DESC']],
+        offset: req.pagination.offset,
+        limit: req.pagination.limit,
+    }).catch(e => console.log(e))
+
+    return res.send({data: tasks, status: 'success'})
+}
 export async function index (req,res) {
     let where = { userId: req.user.id }
     if(req.query.search){

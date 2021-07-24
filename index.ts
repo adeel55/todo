@@ -1,7 +1,7 @@
 import app from "./src/app"
 import schedule from "node-schedule"
 import sendReminderEmail from "./src/controllers/scheduled-controller"
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 schedule.scheduleJob('0 0 * * *', function(){
     console.log('This cron runs at: '+ new Date());

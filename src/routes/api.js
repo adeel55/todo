@@ -52,6 +52,7 @@ router.post('/v1/reset-pass-link/:token', user.resetPasswordByLink)
 
 
 //Task
+router.get('/v2/tasks', [filters], taskController.test)
 router.get('/v1/tasks', [ auth, filters], taskController.index)
 router.post('/v1/task', [ auth ], taskController.create)
 router.get('/v1/task/:id', [ auth ], taskController.view)

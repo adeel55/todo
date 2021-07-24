@@ -190,12 +190,12 @@ export async function signin (req, res) {
     }).catch(e => console.log(e))
 
     if(!user){
-        return res.status(400).send({ message: `Invalid email provided`})
+        return res.status(401).send({ message: `Invalid email provided`})
     }
     
     const isMatch = await bcrypt.compare(req.body.password, user.password)
     if(!isMatch){
-        return res.status(400).send({ message: `Invalid email/password provided`})
+        return res.status(401).send({ message: `Invalid email/password provided`})
     }
 
     
